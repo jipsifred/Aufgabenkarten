@@ -4,7 +4,7 @@
 # ============================================
 
 # Stage 1: Build Frontend
-FROM node:20-alpine AS frontend-builder
+FROM node:20-slim AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -12,7 +12,6 @@ WORKDIR /app/frontend
 COPY package*.json ./
 COPY tsconfig*.json ./
 COPY vite.config.ts ./
-
 COPY index.html ./
 COPY src ./src
 
@@ -21,22 +20,23 @@ RUN npm ci
 RUN npm run build
 
 # Stage 2: Build Backend
-FROM node:20-alpine AS backend-builder
+FROM node:20-slim AS backend-builder
 
 WORKDIR /app/backend
 
 COPY backend/package*.json ./
-# Add build tools for native modules (better-sqlite3)
-RUN apk add --no-cache python3 make g++
+# Debian/Ubuntu usually works with prebuilds for better-sqlite3, 
+# but if build is needed, python3 and make are needed.
+# Let's try reliance on prebuilds first, which usually works on standard Node images.
 RUN npm ci --only=production
 
 # Stage 3: Production
-FROM node:20-alpine AS production
+FROM node:20-slim AS production
 
 WORKDIR /app
 
-# Install SQLite
-RUN apk add --no-cache sqlite
+# Install SQLite CLI (optional, useful for debugging)
+RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
 
 # Copy backend
 COPY backend ./backend
