@@ -51,7 +51,7 @@ RUN mkdir -p /app/data/uploads
 # Set permissions
 RUN chown -R node:node /app
 
-USER node
+# USER node
 
 WORKDIR /app/backend
 
